@@ -137,10 +137,11 @@ def Disk_Usage():
 def Disk_Partitions():
 	Proc_Mounts = Read_Proc('mounts')
 	ExcludeType = ['rootfs', 'proc', 'sysfs', 'devtmpfs', 'devpts', 'tmpfs', 'usbfs', 'binfmt_misc', 'rpc_pipefs', 'configfs', 'autofs']
+	IncludeType = ['ext2', 'ext3', 'ext4', 'vfat', 'zfs', 'gfs']
 	Partitions  = []
 	Devices     = []
 	for Line in Proc_Mounts:
-		if Line.split()[2] not in ExcludeType:
+		if Line.split()[2] in IncludeType:
 			Partitions.append(Line.split()[1])
 			Devices.append(Line.split()[0].split('/')[-1])
 
