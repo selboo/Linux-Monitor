@@ -1,130 +1,147 @@
 #!/usr/bin/env python
 #coding=utf8
 
+from os import statvfs
 from func import *
 from Local.Main  import *
 from time import sleep
-from os import listdir
+from copy import deepcopy
 
-def Read_Cpu_Usage():
-	Proc_Stat = Read_Proc('stat')
-	for line in Proc_Stat:
-		l = line.split()
-		if l[0] == "cpu":
-			return l
+def Disk_Get_Info(Dev, Proc_Diskstats):
 
-def CPU_Get_Info(Cpu, Proc_Stat):
-
-	Column_Stat = [
-		'cpu', 			# 0 CPU ID
-		'user',			# 1 从系统启动开始累计到当前时刻，处于用户态的运行时间，不包含 nice值为负进程。
-		'nice',			# 2 从系统启动开始累计到当前时刻，nice值为负的进程所占用的CPU时间
-		'system',		# 3 从系统启动开始累计到当前时刻，处于核心态的运行时间
-		'idle',			# 4 从系统启动开始累计到当前时刻，除IO等待时间以外的其它等待时间
-		'iowait',		# 5 从系统启动开始累计到当前时刻，IO等待时间(since 2.5.41)
-		'irq',			# 6 从系统启动开始累计到当前时刻，硬中断时间(since 2.6.0-test4)
-		'softirq',		# 7 从系统启动开始累计到当前时刻，软中断时间(since 2.6.0-test4)
-		'stealstolen',	# 8 which is the time spent in other operating systems when running in a virtualized environment(since 2.6.11)
-		'guest',		# 9 which is the time spent running a virtual  CPU  for  guest operating systems under the control of the Linux kernel(since 2.6.24)
+	Column_Diskstats = [
+		'm', 			# 主设备号
+		'mm', 			# 磁盘设备号
+		'dev', 			# 磁盘设备名
+		'reads', 		# number of read I/Os processed
+		'rd_mrg', 		# number of read I/Os merged with in-queue I/O
+		'rd_sectors', 	# number of sectors read
+		'ms_reading', 	# total wait time for read requests
+		'writes', 		# number of write I/Os processed
+		'wr_mrg', 		# number of write I/Os merged with in-queue I/O
+		'wr_sectors', 	# number of sectors written
+		'ms_writing', 	# total wait time for write requests
+		'cur_ios', 		# number of I/Os currently in flight
+		'ms_doing_io', 	# total time this block device has been active
+		'ms_weighted'	# total wait time for all requests
 		]
-	Docs = 'http://www.aikaiyuan.com/9347.html'
-	for Devs in Proc_Stat:
-		if Devs.split()[0] == Cpu:
-			return dict(zip(Column_Stat, Devs.split()))
+	Docs = 'https://www.kernel.org/doc/Documentation/block/stat.txt'
+	for Devs in Proc_Diskstats:
+		if Devs.split()[2] == Dev:
+			return dict(zip(Column_Diskstats, Devs.split()))
 
-def CPU_Count_Add(CPU, CPU_INFO_1, CPU_INFO_2):
-	result   = {}
-	idle_1   = float(CPU_INFO_1[4])
-	user_1   = float(CPU_INFO_1[1]) + float(CPU_INFO_1[2])
-	system_1 = float(CPU_INFO_1[3]) + float(CPU_INFO_1[6]) + float(CPU_INFO_1[7])
-	iowait_1 = float(CPU_INFO_1[5])
-	total_1  = float(CPU_INFO_1[1]) + float(CPU_INFO_1[2]) + float(CPU_INFO_1[3])
+def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2):
+	result = {}
+	A_Disk_Info  = Disk_Get_Info(Dev, Proc_Diskstats_1)
+	A_Reads_KB_1 = float(A_Disk_Info['rd_sectors'])
+	A_Write_KB_2 = float(A_Disk_Info['wr_sectors'])
+	A_Reads_IO_1 = float(A_Disk_Info['rd_mrg'])
+	A_Write_IO_2 = float(A_Disk_Info['wr_mrg'])
 
-	idle_2   = float(CPU_INFO_2[4])
-	user_2   = float(CPU_INFO_2[1]) + float(CPU_INFO_2[2])
-	system_2 = float(CPU_INFO_2[3]) + float(CPU_INFO_2[6]) + float(CPU_INFO_2[7])
-	iowait_2 = float(CPU_INFO_2[5])
-	total_2  = float(CPU_INFO_2[1]) + float(CPU_INFO_2[2]) + float(CPU_INFO_2[3])
+	B_Disk_Info  = Disk_Get_Info(Dev, Proc_Diskstats_2)
+	B_Reads_KB_1 = float(B_Disk_Info['rd_sectors'])
+	B_Write_KB_2 = float(B_Disk_Info['wr_sectors'])
+	B_Reads_IO_1 = float(B_Disk_Info['rd_mrg'])
+	B_Write_IO_2 = float(B_Disk_Info['wr_mrg'])
 
-	idle   = idle_2   - idle_1
-	user   = user_2   - user_1
-	system = system_2 - system_1
-	iowait = iowait_2 - iowait_1
-	total  = idle + user + system + iowait
+	Reads_KB = B_Reads_KB_1 - A_Reads_KB_1
+	Write_KB = B_Write_KB_2 - A_Write_KB_2
+	Reads_IO = B_Reads_IO_1 - A_Reads_IO_1
+	Write_IO = B_Write_IO_2 - A_Write_IO_2
 
-	result['idle']   = str("%.2f" %(idle   / total * 100))
-	result['user']   = str("%.2f" %(user   / total * 100))
-	result['system'] = str("%.2f" %(system / total * 100))
-	result['iowati'] = str("%.2f" %(iowait / total * 100))
-	result['total']  = str("%.2f" %((total_2 - total_1) / ((idle_2 + user_2 + system_2 + iowait_2) - (idle_1 + user_1 + system_1 + iowait_1)) * 100))
+	result["Reads_KB"] = B_Reads_KB_1 - A_Reads_KB_1
+	result["Write_KB"] = B_Write_KB_2 - A_Write_KB_2
+	result["Reads_IO"] = B_Reads_IO_1 - A_Reads_IO_1
+	result["Write_IO"] = B_Write_IO_2 - A_Write_IO_2
 
-	if not avg_cpu.has_key(CPU):
-		avg_cpu[CPU] = result
+	if not avg_io.has_key(Dev):
+		avg_io[Dev] = result
 	else:
-		avg_cpu[CPU]['idle']   = float(avg_cpu[CPU]['idle'])   + float(result['idle'])
-		avg_cpu[CPU]['user']   = float(avg_cpu[CPU]['user'])   + float(result['user'])
-		avg_cpu[CPU]['system'] = float(avg_cpu[CPU]['system']) + float(result['system'])
-		avg_cpu[CPU]['iowati'] = float(avg_cpu[CPU]['iowati']) + float(result['iowati'])
-		avg_cpu[CPU]['total']  = float(avg_cpu[CPU]['total'])  + float(result['total'])
-
+		avg_io[Dev]['Reads_KB'] = avg_io[Dev]['Reads_KB'] + result['Reads_KB']
+		avg_io[Dev]['Write_KB'] = avg_io[Dev]['Write_KB'] + result['Write_KB']
+		avg_io[Dev]['Reads_IO'] = avg_io[Dev]['Reads_IO'] + result['Reads_IO']
+		avg_io[Dev]['Write_IO'] = avg_io[Dev]['Write_IO'] + result['Write_IO']
+	
 	return result
 
-def CPU_Count_CPU():
-	CPU_INFO_1, CPU_id = CPU_List()
+
+def Disk_Count_IO(All_Devices):
+	Proc_Diskstats_1 = Read_Proc('diskstats')
 	sleep(TDM_Sleep)
-	CPU_INFO_2, CPU_id = CPU_List()
+	Proc_Diskstats_2 = Read_Proc('diskstats')
 
-	for CPU in range(0, len(CPU_INFO_1)):
-		CPU_Count_Add(CPU_INFO_1[CPU][0], CPU_INFO_1[CPU], CPU_INFO_2[CPU])
+	for Dev in All_Devices:
+		Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2)
 
-def Cpu_Usage():
-	result = {}
+def Disk_IO():
+	Result = {}
+	Partitions, Devices = Disk_Partitions()
+
+	for i in Devices:
+		Devs = str(disk_dev_re.findall(i)[0])
+		if Devs not in Devices:
+			Devices.append(Devs)
+
 	for i in range(0, TDM_Number):
-		CPU_Count_CPU()
+		Disk_Count_IO(Devices)
 
-	for i in avg_cpu:
-		for k, v in avg_cpu[i].items():
-			avg_cpu[i][k] = str("%.2f" %(float(v) / TDM_Number))
+	for i in avg_io:
+		for k, v in avg_io[i].items():
+			avg_io[i][k] = int(v) / TDM_Number
 
-	data['cpu'] = avg_cpu
- 	return result
+	data['disk_io'] = avg_io
+	return Result
 
-def Cpu_Load():
-	proc_loadavg = ','.join(Read_Proc('loadavg'))
-	lavg_1       = proc_loadavg.split()[0]
-	lavg_5       = proc_loadavg.split()[1]
-	lavg_15      = proc_loadavg.split()[2]
+def Disk_Usage():
+	All_Disk_Total, All_Disk_Free, All_Disk_Used = 0, 0, 0
+	All_Inode_Total, All_Inode_Used, All_Inode_Free = 0, 0, 0
+	Partitions, Devices = Disk_Partitions()
+	Usage      = {}
+	for Partition in Partitions:
+		Disk_Stat  = statvfs(Partition)
+		Disk_Free  = (Disk_Stat.f_bfree  * Disk_Stat.f_frsize) / 1024
+		Disk_Total = (Disk_Stat.f_blocks * Disk_Stat.f_frsize) / 1024
+		Disk_Used  = Disk_Total - Disk_Free
+		Disk_Free  = (Disk_Stat.f_bavail  * Disk_Stat.f_frsize) / 1024
+		
+		Inode_Total = Disk_Stat.f_files
+		Inode_Free  = Disk_Stat.f_ffree
+		Inode_Used  = Inode_Total - Inode_Free
 
-	result = {}
-	result['lavg_1']  = lavg_1
-	result['lavg_5']  = lavg_5
-	result['lavg_15'] = lavg_15
-	data['cpuload']   = result
+		Usage[Partition] = {
+			"Total"  : Disk_Total,
+			"Free"   : Disk_Free,
+			"Used"   : Disk_Used,
+			"Inodes" : Inode_Total,
+			"IUsed"  : Inode_Used,
+			"IFree"  : Inode_Free
+		}
+		All_Disk_Total  = All_Disk_Total  + Disk_Total
+		All_Disk_Free   = All_Disk_Free   + Disk_Free
+		All_Disk_Used   = All_Disk_Used   + Disk_Used
+		All_Inode_Total = All_Inode_Total + Inode_Total
+		All_Inode_Used  = All_Inode_Used  + Inode_Used
+		All_Inode_Free  = All_Inode_Free  + Inode_Free
+	# All Disk Usage
+	Usage['All'] = {
+		"Total"  : All_Disk_Total,
+		"Free"   : All_Disk_Free,
+		"Used"   : All_Disk_Used,
+		"Inodes" : All_Inode_Total,
+		"IUsed"  : All_Inode_Used,
+		"IFree"  : All_Inode_Free
+	}
+	data['disk_us'] = Usage
+	return Usage
 
-	return lavg_1, lavg_5, lavg_15
+def Disk_Partitions():
+	Proc_Mounts = Read_Proc('mounts')
+	ExcludeType = ['rootfs', 'proc', 'sysfs', 'devtmpfs', 'devpts', 'tmpfs', 'usbfs', 'binfmt_misc', 'rpc_pipefs', 'configfs', 'autofs']
+	Partitions  = []
+	Devices     = []
+	for Line in Proc_Mounts:
+		if Line.split()[2] not in ExcludeType:
+			Partitions.append(Line.split()[1])
+			Devices.append(Line.split()[0].split('/')[-1])
 
-def Press():
-	result = {}
-	proc_loadavg = ','.join(Read_Proc('loadavg'))
-	thread       = proc_loadavg.split()[3].split('/')[1]
-	process      = 0
-	proc         = listdir('/proc/')
-	for i in range(0, len(proc)):
-		if cpu_pre_re.match( proc[i] ):
-			process = process + 1
-
-	result['thread']   = int(thread)
-	result['process']  = int(process)
-
-	data['process'] = result
-	return result
-
-def CPU_List():
-	Proc_Stat     = Read_Proc('stat')
-	CPU_Lists     = []
-	CPU_Lists_id  = []
-	for Line in Proc_Stat:
-		if cpu_cpu_re.match( Line.split()[0] ):
-			CPU_Lists.append(Line.split())
-			CPU_Lists_id.append(Line.split()[0])
-	return CPU_Lists, CPU_Lists_id
+	return Partitions, Devices
