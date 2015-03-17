@@ -20,6 +20,7 @@ def Raid():
 	dspeed = ReInfo(info, 'Device Speed')
 	lspeed = ReInfo(info, 'Link Speed')
 	temper = ReInfo(info, 'Drive Temperature')
+	dstate = ReInfo(info, 'Firmware state')
 
 	if conn == stat:
 		status = True
@@ -38,6 +39,7 @@ def Raid():
 		result[disk]['sn']     = findall( raid_sn_re,     sn[i])[0]
 		result[disk]['dspeed'] = int(findall( raid_dspeed_re, dspeed[i])[0])
 		result[disk]['lspeed'] = int(findall( raid_lspeed_re, lspeed[i])[0])
+		result[disk]['status'] = disk_status(findall( raid_status_re, dstate[i])[0])
 		result[disk]['temper'] = int(findall( raid_temper_re, temper[i])[0])
 		result[disk]['size']   = int(findall( raid_size_re , size[i])[0].split('.')[0])
 
@@ -50,3 +52,9 @@ def ReInfo(info, res):
 		match=findall( '^' + res + '.*' , i)
 		if match != []: result.append(match[0])
 	return result
+
+def disk_status(str):
+	if str == 'Online, Spun Up':
+		return True
+	else:
+		return False

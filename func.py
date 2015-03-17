@@ -84,3 +84,6 @@ def Post(data, url = PostUrl):
 	requ = Request(url, data)
 	resp = urlopen(requ, timeout=Timeout)
 	return resp.read()
+
+def Bytes(integer, Multiple = 1024):
+	return integer * Multiple

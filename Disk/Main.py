@@ -44,13 +44,8 @@ def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2):
 	B_Reads_IO_1 = float(B_Disk_Info['rd_mrg'])
 	B_Write_IO_2 = float(B_Disk_Info['wr_mrg'])
 
-	Reads_KB = B_Reads_KB_1 - A_Reads_KB_1
-	Write_KB = B_Write_KB_2 - A_Write_KB_2
-	Reads_IO = B_Reads_IO_1 - A_Reads_IO_1
-	Write_IO = B_Write_IO_2 - A_Write_IO_2
-
-	result["Reads_KB"] = B_Reads_KB_1 - A_Reads_KB_1
-	result["Write_KB"] = B_Write_KB_2 - A_Write_KB_2
+	result["Reads_KB"] = Bytes(B_Reads_KB_1 - A_Reads_KB_1)
+	result["Write_KB"] = Bytes(B_Write_KB_2 - A_Write_KB_2)
 	result["Reads_IO"] = B_Reads_IO_1 - A_Reads_IO_1
 	result["Write_IO"] = B_Write_IO_2 - A_Write_IO_2
 
@@ -109,9 +104,9 @@ def Disk_Usage():
 		Inode_Used  = Inode_Total - Inode_Free
 
 		Usage[Partition] = {
-			"Total"  : Disk_Total,
-			"Free"   : Disk_Free,
-			"Used"   : Disk_Used,
+			"Total"  : Bytes(Disk_Total),
+			"Free"   : Bytes(Disk_Free),
+			"Used"   : Bytes(Disk_Used),
 			"Inodes" : Inode_Total,
 			"IUsed"  : Inode_Used,
 			"IFree"  : Inode_Free
@@ -124,9 +119,9 @@ def Disk_Usage():
 		All_Inode_Free  = All_Inode_Free  + Inode_Free
 	# All Disk Usage
 	Usage['All'] = {
-		"Total"  : All_Disk_Total,
-		"Free"   : All_Disk_Free,
-		"Used"   : All_Disk_Used,
+		"Total"  : Bytes(All_Disk_Total),
+		"Free"   : Bytes(All_Disk_Free),
+		"Used"   : Bytes(All_Disk_Used),
 		"Inodes" : All_Inode_Total,
 		"IUsed"  : All_Inode_Used,
 		"IFree"  : All_Inode_Free
@@ -137,11 +132,13 @@ def Disk_Usage():
 def Disk_Partitions():
 	Proc_Mounts = Read_Proc('mounts')
 	ExcludeType = ['rootfs', 'proc', 'sysfs', 'devtmpfs', 'devpts', 'tmpfs', 'usbfs', 'binfmt_misc']
+	IncludeType = ['ext2', 'ext3', 'ext4', 'vfat', 'zfs', 'gfs', 'btrfs', 'xfs']
 	Partitions  = []
 	Devices     = []
 	for Line in Proc_Mounts:
-		if Line.split()[2] not in ExcludeType:
+		if Line.split()[2] in IncludeType:
 			Partitions.append(Line.split()[1])
-			Devices.append(Line.split()[0].split('/')[-1])
+			Fileln = os.path.realpath(Line.split()[0])
+			Devices.append(Fileln.split('/')[-1])
 
 	return Partitions, Devices

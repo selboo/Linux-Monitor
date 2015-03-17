@@ -15,7 +15,8 @@ from urllib2     import Request, urlopen
 from urllib      import urlencode
 from threading   import Thread
 from json        import dumps, loads
-from sys         import argv
+from sys         import argv, exit
+from os          import geteuid
 
 def Jdump(data):
 	return dumps(data, indent=1)
@@ -28,6 +29,7 @@ def Pub(Debug=False):
 		Press     : "NULL", Disk_Usage: "NULL",
 		Disk_IO   : "NULL", Net_Usage : "NULL",
 		File      : "NULL", Port      : "NULL",
+		#Disk_IO   : "NULL",
 	}
 
 	try:
@@ -54,8 +56,13 @@ def Pub(Debug=False):
 
 	return loads(Post(data))
 
-if __name__ == '__main__':
+def is_root():
+	if geteuid() != 0:
+		print "Please use the super user root"
+		exit(1)
 
+if __name__ == '__main__':
+	is_root()
 	result = Pub(Debug=False)
 
 	if result.has_key('err_msg'):

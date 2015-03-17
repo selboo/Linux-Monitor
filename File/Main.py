@@ -4,7 +4,7 @@
 from func import *
 from os.path import getctime
 from os      import mknod
-from difflib import HtmlDiff
+from difflib import unified_diff
 from base64  import b64encode
 from shutil  import copy
 
@@ -61,12 +61,13 @@ def Diff_File(pFile, Status):
 	sString = ''.join(sFile.readlines()).splitlines()
 	sFile.close()
 
-	dFile   = open(dFile, 'r')
-	dString = ''.join(dFile.readlines()).splitlines()
-	dFile.close()
+	tFile   = open(dFile, 'r')
+	dString = ''.join(tFile.readlines()).splitlines()
+	tFile.close()
 
-	#diff = HtmlDiff().make_file(sString, dString)
-	diff = HtmlDiff().make_table(sString, dString)
+	diff = unified_diff(dString, sString)
+	diff = "\n".join(list(diff))
+	copy(pFile, dFile)
 	return b64encode(diff)
 
 

@@ -23,12 +23,12 @@ def Memory():
 	SwapUsage = SwapTotal - SwapFree
 
 	result = {}
-	result['MemTotal']   = MemTotal
-	result['MemUsage']   = MemUsage
-	result['MemBuffers'] = Buffers
-	result['MemCached']  = Cached
-	result['SwapTotal']  = SwapTotal
-	result['SwapUsage']  = SwapUsage
+	result['MemTotal']   = Bytes(MemTotal)
+	result['MemUsage']   = Bytes(MemUsage)
+	result['MemBuffers'] = Bytes(Buffers)
+	result['MemCached']  = Bytes(Cached)
+	result['SwapTotal']  = Bytes(SwapTotal)
+	result['SwapUsage']  = Bytes(SwapUsage)
 
 	data['memory'] = result
 	return result
