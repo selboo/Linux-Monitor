@@ -13,7 +13,6 @@ TDM_Number = 1
 data       = {}
 threadings = []
 Timeout    = 5
-PostUrl    = "http://10.1.8.208:8102/recv/server"
 
 # Port Watch
 Port_Watch = [
@@ -22,13 +21,13 @@ Port_Watch = [
 	3306,
 	8080,
 	777
-	]
+]
 
 # File Watch
 File_Watch = [
 	'/etc/hosts',
 	'/etc/passwd',
-	]
+]
 
 # CPU global
 avg_cpu    = {}

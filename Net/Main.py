@@ -38,11 +38,25 @@ def Net_Usage():
 	for i in range(0, TDM_Number):
 		Net_Count(Net_Type)
 
+ 	all_net = {
+		"rx_bytes"   : 0,
+		"rx_packets" : 0,
+		"rx_dropped" : 0,
+		"rx_errors"  : 0,
+		"tx_bytes"   : 0,
+		"tx_packets" : 0,
+		"tx_dropped" : 0,
+		"tx_errors"  : 0
+	}
+
 	for i in avg_net:
 		for v in Net_Type:
 			avg_net[i][v] = int(avg_net[i][v]) / TDM_Number
+			if i != 'lo':
+				all_net[v] = all_net.get(v) + avg_net[i][v]
 
 	data['net_us'] = avg_net
+	data['net_us']["all"] = all_net
 	return True
 
 def Net_Count(Net_Type):

@@ -69,7 +69,6 @@ def Disk_Count_IO(All_Devices):
 		Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2)
 
 def Disk_IO():
-	Result = {}
 	Partitions, Devices = Disk_Partitions()
 
 	for i in Devices:
@@ -80,12 +79,21 @@ def Disk_IO():
 	for i in range(0, TDM_Number):
 		Disk_Count_IO(Devices)
 
+	all_io = {
+		"Reads_IO" : 0,
+		"Write_IO" : 0,
+		"Reads_KB" : 0,
+		"Write_KB" : 0
+	}
+
 	for i in avg_io:
 		for k, v in avg_io[i].items():
 			avg_io[i][k] = int(v) / TDM_Number
+			all_io[k] = all_io.get(k) + avg_io[i][k]
 
 	data['disk_io'] = avg_io
-	return Result
+	data['disk_io']['all'] = all_io
+	return True
 
 def Disk_Usage():
 	All_Disk_Total, All_Disk_Free, All_Disk_Used = 0, 0, 0
@@ -118,7 +126,7 @@ def Disk_Usage():
 		All_Inode_Used  = All_Inode_Used  + Inode_Used
 		All_Inode_Free  = All_Inode_Free  + Inode_Free
 	# All Disk Usage
-	Usage['All'] = {
+	Usage['all'] = {
 		"Total"  : Bytes(All_Disk_Total),
 		"Free"   : Bytes(All_Disk_Free),
 		"Used"   : Bytes(All_Disk_Used),

@@ -32,17 +32,11 @@ def Read_Sys(face, type, stat='statistics'):
 		else:
 			return sys.readlines()
 
-def Dick_Proc(file):
-	pass
-
 def avg(lists):
 	Num = 0
 	for i in lists:
 		Num = Num + float(i)
 	return ('%.2f' %(Num / len(lists)))
-
-def Post(data):
-	pass
 
 def Net_Get_IP(Eth):
 	Socket = socket(AF_INET, SOCK_DGRAM).fileno
@@ -78,12 +72,6 @@ def Cmd(cmds):
 	for i in range(len(m)):
 		r.append(''.join(m[i]))
 	return ''.join(r)
-
-def Post(data, url = PostUrl):
-	data = urlencode(data)
-	requ = Request(url, data)
-	resp = urlopen(requ, timeout=Timeout)
-	return resp.read()
 
 def Bytes(integer, Multiple = 1024):
 	return integer * Multiple
