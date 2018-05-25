@@ -30,7 +30,7 @@ def Disk_Get_Info(Dev, Proc_Diskstats):
 		if Devs.split()[2] == Dev:
 			return dict(zip(Column_Diskstats, Devs.split()))
 
-def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2):
+def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2, avg_io):
 	result = {}
 	A_Disk_Info  = Disk_Get_Info(Dev, Proc_Diskstats_1)
 	A_Reads_KB_1 = float(A_Disk_Info['rd_sectors'])
@@ -57,18 +57,23 @@ def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2):
 		avg_io[Dev]['Reads_IO'] = avg_io[Dev]['Reads_IO'] + result['Reads_IO']
 		avg_io[Dev]['Write_IO'] = avg_io[Dev]['Write_IO'] + result['Write_IO']
 	
-	return result
+	return avg_io
 
 
-def Disk_Count_IO(All_Devices):
+def Disk_Count_IO(All_Devices, avg_io):
 	Proc_Diskstats_1 = Read_Proc('diskstats')
 	sleep(TDM_Sleep)
 	Proc_Diskstats_2 = Read_Proc('diskstats')
 
 	for Dev in All_Devices:
-		Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2)
+		Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2, avg_io)
 
-def Disk_IO():
+	return avg_io
+
+def Disk_IO(data):
+	Result = {}
+	avg_io = {}
+
 	Partitions, Devices = Disk_Partitions()
 
 	for i in Devices:
@@ -76,8 +81,7 @@ def Disk_IO():
 		if Devs not in Devices:
 			Devices.append(Devs)
 
-	for i in range(0, TDM_Number):
-		Disk_Count_IO(Devices)
+	avg_io = Disk_Count_IO(Devices, avg_io)
 
 	all_io = {
 		"Reads_IO" : 0,
@@ -88,14 +92,14 @@ def Disk_IO():
 
 	for i in avg_io:
 		for k, v in avg_io[i].items():
-			avg_io[i][k] = int(v) / TDM_Number
+			avg_io[i][k] = int(v)
 			all_io[k] = all_io.get(k) + avg_io[i][k]
 
 	data['disk_io'] = avg_io
 	data['disk_io']['all'] = all_io
-	return True
+	return data
 
-def Disk_Usage():
+def Disk_Usage(data):
 	All_Disk_Total, All_Disk_Free, All_Disk_Used = 0, 0, 0
 	All_Inode_Total, All_Inode_Used, All_Inode_Free = 0, 0, 0
 	Partitions, Devices = Disk_Partitions()
@@ -126,7 +130,7 @@ def Disk_Usage():
 		All_Inode_Used  = All_Inode_Used  + Inode_Used
 		All_Inode_Free  = All_Inode_Free  + Inode_Free
 	# All Disk Usage
-	Usage['all'] = {
+	Usage['All'] = {
 		"Total"  : Bytes(All_Disk_Total),
 		"Free"   : Bytes(All_Disk_Free),
 		"Used"   : Bytes(All_Disk_Used),
@@ -135,7 +139,7 @@ def Disk_Usage():
 		"IFree"  : All_Inode_Free
 	}
 	data['disk_us'] = Usage
-	return Usage
+	return data
 
 def Disk_Partitions():
 	Proc_Mounts = Read_Proc('mounts')

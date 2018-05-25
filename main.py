@@ -14,27 +14,30 @@ from threading   import Thread
 from json        import dumps, loads
 from sys         import argv, exit
 from os          import geteuid
+from time        import sleep
 
 def Jdump(data):
 	return dumps(data, indent=1)
 
 def Run(Debug=False):
 
+	data = {}
+	threadings = []
+
 	TDMList = {
-		HostName  : "NULL", Memory    : "NULL",
-		Cpu_Usage : "NULL", Cpu_Load  : "NULL",
-		Press     : "NULL", Disk_Usage: "NULL",
-		Disk_IO   : "NULL", Net_Usage : "NULL",
-		#Disk_IO   : "NULL",
+		HostName  : "NULL", 
+		Memory    : "NULL",
+		Net_Usage : "NULL",
+		Press     : "NULL", 
+		Cpu_Usage : "NULL", 
+		Cpu_Load  : "NULL",
+		Disk_Usage: "NULL",
+		Disk_IO   : "NULL", 
 	}
 
 	for Keys,Value in TDMList.items():
-		if Value == "NULL":
-			threadings.append(Thread(target=Keys))
-		else:
-			threadings.append(Thread(target=Keys, args=(Value, )))
+		threadings.append(Thread(target=Keys, args=(data, )))
 	for t in threadings:
-		t.setDaemon(True)
 		t.start()
 	for t in threadings:
 		t.join()
@@ -48,6 +51,8 @@ def is_root():
 
 if __name__ == '__main__':
 	is_root()
-	result = Run(Debug=False)
-	print Jdump(result)
+	while True:
+		sleep(1)
+		result = Run(Debug=False)
+		print Jdump(result)
 

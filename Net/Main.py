@@ -4,8 +4,9 @@
 from func import *
 from time import sleep
 
-def Net_Usage():
+def Net_Usage(data):
 	result = {}
+	avg_net = {}
 
 	'''
 		keys    eth0
@@ -35,8 +36,7 @@ def Net_Usage():
 			else:
 				avg_net[i][v[1]] = str(Read_Sys(i, k, v[0])[0].split('\n')[0])
 
-	for i in range(0, TDM_Number):
-		Net_Count(Net_Type)
+	avg_net = Net_Count(Net_Type, avg_net)
 
  	all_net = {
 		"rx_bytes"   : 0,
@@ -49,17 +49,19 @@ def Net_Usage():
 		"tx_errors"  : 0
 	}
 
+
 	for i in avg_net:
 		for v in Net_Type:
-			avg_net[i][v] = int(avg_net[i][v]) / TDM_Number
+			avg_net[i][v] = int(avg_net[i][v])
 			if i != 'lo':
 				all_net[v] = all_net.get(v) + avg_net[i][v]
 
+
 	data['net_us'] = avg_net
 	data['net_us']["all"] = all_net
-	return True
+	return data
 
-def Net_Count(Net_Type):
+def Net_Count(Net_Type, avg_net):
 	
 	result_1 = {}
 	result_2 = {}
@@ -101,7 +103,7 @@ def Net_Count(Net_Type):
 		avg_net[i]['tx_dropped'] = avg_net[i]['tx_dropped'] + result_2[i]['tx_dropped'] - result_1[i]['tx_dropped']
 		avg_net[i]['tx_errors']  = avg_net[i]['tx_errors']  + result_2[i]['tx_errors']  - result_1[i]['tx_errors']
 
-	return True
+	return avg_net
 
 def Net_Face():
 	Proc_Net_Dev = Read_Proc('net/dev')

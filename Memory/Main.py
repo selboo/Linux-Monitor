@@ -10,7 +10,7 @@ def Memory_Get_Info():
 		Dick_MemInfo[i.split()[0][0:-1]] = int(i.split()[1])
 	return Dick_MemInfo
 
-def Memory():
+def Memory(data):
 	Memory    = Memory_Get_Info()
 	MemTotal  = Memory['MemTotal']
 	MemFree   = Memory['MemFree']
@@ -31,5 +31,5 @@ def Memory():
 	result['SwapUsage']  = Bytes(SwapUsage)
 
 	data['memory'] = result
-	return result
+	return data
 

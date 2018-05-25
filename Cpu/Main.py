@@ -32,7 +32,7 @@ def CPU_Get_Info(Cpu, Proc_Stat):
 		if Devs.split()[0] == Cpu:
 			return dict(zip(Column_Stat, Devs.split()))
 
-def CPU_Count_Add(CPU, CPU_INFO_1, CPU_INFO_2):
+def CPU_Count_Add(CPU, CPU_INFO_1, CPU_INFO_2, avg_cpu):
 	result   = {}
 	idle_1   = float(CPU_INFO_1[4])
 	user_1   = float(CPU_INFO_1[1]) + float(CPU_INFO_1[2])
@@ -67,29 +67,32 @@ def CPU_Count_Add(CPU, CPU_INFO_1, CPU_INFO_2):
 		avg_cpu[CPU]['iowati'] = float(avg_cpu[CPU]['iowati']) + float(result['iowati'])
 		avg_cpu[CPU]['total']  = float(avg_cpu[CPU]['total'])  + float(result['total'])
 
-	return result
+	return avg_cpu
 
-def CPU_Count_CPU():
+def CPU_Count_CPU(avg_cpu):
+	avg_cpu = {}
 	CPU_INFO_1, CPU_id = CPU_List()
 	sleep(TDM_Sleep)
 	CPU_INFO_2, CPU_id = CPU_List()
 
 	for CPU in range(0, len(CPU_INFO_1)):
-		CPU_Count_Add(CPU_INFO_1[CPU][0], CPU_INFO_1[CPU], CPU_INFO_2[CPU])
+		CPU_Count_Add(CPU_INFO_1[CPU][0], CPU_INFO_1[CPU], CPU_INFO_2[CPU], avg_cpu)
 
-def Cpu_Usage():
+	return avg_cpu
+def Cpu_Usage(data):
 	result = {}
-	for i in range(0, TDM_Number):
-		CPU_Count_CPU()
+	avg_cpu = {}
+
+	avg_cpu = CPU_Count_CPU(avg_cpu)
 
 	for i in avg_cpu:
 		for k, v in avg_cpu[i].items():
-			avg_cpu[i][k] = str("%.2f" %(float(v) / TDM_Number))
+			avg_cpu[i][k] = str("%.2f" %(float(v)))
 
 	data['cpu'] = avg_cpu
- 	return result
+ 	return data
 
-def Cpu_Load():
+def Cpu_Load(data):
 	proc_loadavg = ','.join(Read_Proc('loadavg'))
 	lavg_1       = proc_loadavg.split()[0]
 	lavg_5       = proc_loadavg.split()[1]
@@ -101,9 +104,9 @@ def Cpu_Load():
 	result['lavg_15'] = lavg_15
 	data['cpuload']   = result
 
-	return lavg_1, lavg_5, lavg_15
+	return data
 
-def Press():
+def Press(data):
 	result = {}
 	proc_loadavg = ','.join(Read_Proc('loadavg'))
 	thread       = proc_loadavg.split()[3].split('/')[1]
@@ -117,7 +120,7 @@ def Press():
 	result['process']  = int(process)
 
 	data['process'] = result
-	return result
+	return data
 
 def CPU_List():
 	Proc_Stat     = Read_Proc('stat')

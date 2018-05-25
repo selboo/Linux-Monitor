@@ -9,10 +9,6 @@ global TDM_Sleep
 global TDM_Number
 global Timeout
 TDM_Sleep  = 1
-TDM_Number = 1
-data       = {}
-threadings = []
-Timeout    = 5
 
 # Port Watch
 Port_Watch = [
@@ -22,21 +18,6 @@ Port_Watch = [
 	8080,
 	777
 ]
-
-# File Watch
-File_Watch = [
-	'/etc/hosts',
-	'/etc/passwd',
-]
-
-# CPU global
-avg_cpu    = {}
-
-# DISK global
-avg_io     = {}
-
-# NETWORK global
-avg_net    = {}
 
 # raid regex
 raid_type_re   = compile( '(?<=PD Type: ).*(?=$)' )
