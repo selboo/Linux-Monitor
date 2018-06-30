@@ -29,6 +29,7 @@ def Disk_Get_Info(Dev, Proc_Diskstats):
 	for Devs in Proc_Diskstats:
 		if Devs.split()[2] == Dev:
 			return dict(zip(Column_Diskstats, Devs.split()))
+	return {}
 
 def Disk_Count_Add(Dev, Proc_Diskstats_1, Proc_Diskstats_2, avg_io):
 	result = {}
@@ -143,12 +144,18 @@ def Disk_Usage(data):
 
 def Disk_Partitions():
 	Proc_Mounts = Read_Proc('mounts')
-	ExcludeType = ['rootfs', 'proc', 'sysfs', 'devtmpfs', 'devpts', 'tmpfs', 'usbfs', 'binfmt_misc']
+	ExcludeType = ['rootfs', 'proc', 'sysfs', 'devtmpfs', 'devpts', 'tmpfs', 'usbfs', 'binfmt_misc', 'dm', '/dev/mapper/']
 	IncludeType = ['ext2', 'ext3', 'ext4', 'vfat', 'zfs', 'gfs', 'btrfs', 'xfs']
 	Partitions  = []
 	Devices     = []
 	for Line in Proc_Mounts:
 		if Line.split()[2] in IncludeType:
+			s = False
+			for exclude in ExcludeType:
+				if exclude in Line.split()[0]:
+					s = True
+					break
+			if s: break
 			Partitions.append(Line.split()[1])
 			Fileln = os.path.realpath(Line.split()[0])
 			Devices.append(Fileln.split('/')[-1])
